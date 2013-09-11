@@ -74,16 +74,18 @@ function divide_segment(a, b, count)
 
 				function init(){
 				
-				/*
-				* THE WEBGL CONTEXT AND VIEWPORT
-				*/
+				//the math for the snowflake
 				vertices = [vec2(-.5, -.5 ), vec2( 0.0, .5 ), vec2( .5, -.5 )];
-				
-
-    // Subdivide the original triangle
+				// Subdivide the original triangle
 				divide_segment( vertices[0], vertices[1], NumTimesToSubdivide);
 				divide_segment( vertices[1], vertices[2], NumTimesToSubdivide);
 				divide_segment( vertices[2], vertices[0], NumTimesToSubdivide);
+				
+				
+				/*
+				* THE WEBGL CONTEXT AND VIEWPORT
+				*/
+				
 				
 				canvas = document.getElementById("mycanvas");
 				
@@ -98,6 +100,7 @@ function divide_segment(a, b, count)
 				/*
 				* COMPLILING AND LINKING SHADERS
 				*/
+				
 				var v = document.getElementById("vertex").firstChild.nodeValue; //grabs the source of the shader as a string 
 				var f = document.getElementById("fragment").firstChild.nodeValue; //^^
  
@@ -118,6 +121,7 @@ function divide_segment(a, b, count)
 				/*
 				* DEBUGGING SHADERS
 				*/
+				
 				//debugging shaders is annoying so this checks if the linking process went well. 
 				if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS))
 					console.log(gl.getShaderInfoLog(vs));
@@ -135,15 +139,7 @@ function divide_segment(a, b, count)
 				//to create a square, we need to create an array, which in WebGL is called a buffer, the the coordinates of the two triangles. 
 				
 				var aspect = canvas.width / canvas.height;
- 
-				/*var vertices = new Float32Array([
-					-0.5, 0.5*aspect, 0.5, 0.5*aspect,  0.5,-0.5*aspect,  // (x,y) (x,y) (x,y) Triangle 1
-					-0.5, 0.5*aspect, 0.5,-0.5*aspect, -0.5,-0.5*aspect   // Triangle 2
-					]); */
-				
-			
-				
-				//alert(points.toString());
+ 		
 				var points2 =  new Float32Array(points.length*2);
 				
 				for (var i=0; i<points.length-1; i++)
@@ -157,7 +153,7 @@ function divide_segment(a, b, count)
 				
 				vbuffer = gl.createBuffer(); // creates a buffer
 				gl.bindBuffer(gl.ARRAY_BUFFER, vbuffer); // makes this the current buffer in webGL  when its bound, any call to a function will operate on thsi buffer and this is what happens when we invoke buffer data         
-				gl.bufferData(gl.ARRAY_BUFFER, points2, gl.STATIC_DRAW); 
+				gl.bufferData(gl.ARRAY_BUFFER, points2, gl.STATIC_DRAW); //links buffer data with data in points2 
  
 				itemSize = 2;
 				numItems = points.length / itemSize;
@@ -173,14 +169,14 @@ function divide_segment(a, b, count)
  
 				program.aVertexPosition = gl.getAttribLocation(program, "aVertexPosition"); // get location attribute from gl_Position
 				gl.enableVertexAttribArray(program.aVertexPosition); //enable the attribute and assign a pointer to this attibute, 
-				gl.vertexAttribPointer(program.aVertexPosition, itemSize, gl.FLOAT, false, 0, 0); //we specify the item size of the data in the attribute. 
+				gl.vertexAttribPointer(program.aVertexPosition, itemSize, gl.FLOAT, false, 0, 0); //we specify the item size of the data in the attribute. This means that when it goes throught he array taking data, it will take 2 numbers for a vertex position
 				//it's like saying: every attribute is compised of two subsequent numbers in the array. WebGL automatically extracts them and packs them into a variable of type vec2 that goes into the shader. 
 				
 				/*
 				* DRAWING
 				*/
-				//gl.drawArrays(gl.TRIANGLES, 0, numItems); // triangles
-				//num items means how many points are going in the array.
+				
+				//the 3072*2 represents how many points the snowflake needs, since each segment is made of 2 points
 				 gl.drawArrays(gl.LINES,0,3072*2);
 				}
 				//
