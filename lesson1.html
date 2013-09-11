@@ -1,0 +1,138 @@
+<html>
+<head>           
+        <script id="vertex" type="x-shader">
+		/*
+		* THE VERTEX SHADER
+		*/
+		
+		//ok so every shader has one function called main that will be executed during rendering.
+		attribute vec2 aVertexPosition; //parameter to the shader function. they can either be attribute or uniform. 
+		//an attribute is an array of data that will be processed - the shader's main function will be called for each element of this array. 
+		//Typically an attribute will hold data related to positions of vertices, their colors or texture coordinates. but its mostly an array of numbers a shader can interpret in anyway you want.  
+		
+		 
+		void main() {
+        gl_Position = vec4(aVertexPosition, 0.0, 1.0); // basically gl_position is what is returned by the shader. a vertex position, that can be rendered. 
+					//we used a vec2, though gl_position expects a vec 4. Since we are only drawing a 2d thing, we hardcode in the remaining values, since they will a;ways be the same. 
+		//vec4(x,y,depth( >1 or <-1), homogenous coordinate used in perspective projection.)
+		}
+		</script>  
+        <script id="fragment" type="x-shader">
+		/*
+		* THE FRAGMENT SHADER
+		*/
+			#ifdef GL_ES //first 3 lines are boiler plate code, it defines precision used with floating ponit values and just needs to be there. 
+		precision highp float;
+		#endif
+                   
+		uniform vec4 uColor; //uniform values are constant, unlike attributes. 
+                       
+		void main() {
+        gl_FragColor = uColor;
+		}
+		
+		</script>        
+        <script type="text/javascript">
+
+				function init(){
+				
+				/*
+				* THE WEBGL CONTEXT AND VIEWPORT
+				*/
+				canvas = document.getElementById("mycanvas");
+				gl = canvas.getContext("experimental-webgl");
+                gl.viewport(0, 0, canvas.width, canvas.height);
+				gl.clearColor(0, 0.5, 0, 1.0); //sets background to white 
+				gl.clear(gl.COLOR_BUFFER_BIT); //sets the canvas color to green
+				
+				//Shaders do not get complied by the browser. 
+				
+				/*
+				* COMPLILING AND LINKING SHADERS
+				*/
+				var v = document.getElementById("vertex").firstChild.nodeValue; //grabs the source of the shader as a string 
+				var f = document.getElementById("fragment").firstChild.nodeValue; //^^
+ 
+				var vs = gl.createShader(gl.VERTEX_SHADER);  //creates shader object
+				gl.shaderSource(vs, v);//pass the source
+				gl.compileShader(vs); //complies shader
+ 
+				var fs = gl.createShader(gl.FRAGMENT_SHADER); //creates shader object
+				gl.shaderSource(fs, f); //pass the source
+				gl.compileShader(fs); //complies shader
+ 
+				//this next part puts the two different shaders together into something called a 'program' in WebGL. this is done by linking them. 
+				program = gl.createProgram(); 
+				gl.attachShader(program, vs);
+				gl.attachShader(program, fs);
+				gl.linkProgram(program);
+				
+				/*
+				* DEBUGGING SHADERS
+				*/
+				//debugging shaders is annoying so this checks if the linking process went well. 
+				if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS))
+					console.log(gl.getShaderInfoLog(vs));
+ 
+				if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS))
+					console.log(gl.getShaderInfoLog(fs));
+ 
+				if (!gl.getProgramParameter(program, gl.LINK_STATUS))
+					console.log(gl.getProgramInfoLog(program));
+				
+				/*
+				* NATIVE COORDINATE SYSTEM
+				*/
+				//in webGL there are three types of primatives. points, lines, triangles. triangles are the most popular because all 3d objects are made out of triangles. 
+				//to create a square, we need to create an array, which in WebGL is called a buffer, the the coordinates of the two triangles. 
+				
+				var aspect = canvas.width / canvas.height;
+ 
+				/*var vertices = new Float32Array([
+					-0.5, 0.5*aspect, 0.5, 0.5*aspect,  0.5,-0.5*aspect,  // (x,y) (x,y) (x,y) Triangle 1
+					-0.5, 0.5*aspect, 0.5,-0.5*aspect, -0.5,-0.5*aspect   // Triangle 2
+					]); */
+				
+				var vertices = new Float32Array([
+					-1, -1,0, 1,
+					0, 1, 1,-1,
+					-1,-1, 1,-1
+					 
+					   // this one isnt being drawn for some reason. 
+					]);
+					
+				vbuffer = gl.createBuffer(); // creates a buffer
+				gl.bindBuffer(gl.ARRAY_BUFFER, vbuffer); // makes this the current buffer in webGL  when its bound, any call to a function will operate on thsi buffer and this is what happens when we invoke buffer data         
+				gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW); 
+ 
+				itemSize = 2;
+				numItems = vertices.length / itemSize;
+				
+				/*
+				* SETTING UNIFORMS AND ATTRIBUTES
+				*/
+				
+				gl.useProgram(program); //instructs webGL to use the current program for any subsequent calls. 
+ 
+				program.uColor = gl.getUniformLocation(program, "uColor"); // 
+				gl.uniform4fv(program.uColor, [0.0, 1.0, 0.0, 1.0]); // sets the color for the uColor shader
+ 
+				program.aVertexPosition = gl.getAttribLocation(program, "aVertexPosition"); // get location attribute from gl_Position
+				gl.enableVertexAttribArray(program.aVertexPosition); //enable the attribute and assign a pointer to this attibute, 
+				gl.vertexAttribPointer(program.aVertexPosition, itemSize, gl.FLOAT, false, 0, 0); //we specify the item size of the data in the attribute. 
+				//it's like saying: every attribute is compised of two subsequent numbers in the array. WebGL automatically extracts them and packs them into a variable of type vec2 that goes into the shader. 
+				
+				/*
+				* DRAWING
+				*/
+				//gl.drawArrays(gl.TRIANGLES, 0, numItems); // triangles
+				//num items means how many points are going in the array.
+				 gl.drawArrays(gl.LINES,0, 6)
+				}
+				//
+        </script>
+</head>
+<body onload="init()">
+        <canvas id="mycanvas" width="512" height="512"></canvas>
+</body>
+</html>
